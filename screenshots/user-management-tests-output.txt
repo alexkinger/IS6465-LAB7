@@ -1,0 +1,22 @@
+PASS UM-01 student registration creates Active Student
+PASS UM-01 student profile row linked by user_id
+PASS UM-01 rejects Administrator via public registration
+PASS UM-01 duplicate email rejected
+PASS UM-09 valid credentials authenticate
+PASS UM-09 invalid password rejected
+PASS Password hash does not contain plaintext password
+PASS password_verify succeeds for stored hash
+PASS UM-04 profile name update
+PASS UM-05 new password works
+PASS UM-05 old password fails
+PASS Administrator account created
+PASS UM-03 search returns matching accounts
+PASS UM-06 role update
+PASS UM-07 deactivate account
+PASS UM-07 inactive user cannot log in
+PASS Student can create tutoring request while authenticated
+PASS UM-08 deletion blocked by related tutoring records
+PASS Student request list shows own requests
+PASS CSRF helper functions are available
+PASS CSRF token format is 64 hex characters
+All user-management checks passed

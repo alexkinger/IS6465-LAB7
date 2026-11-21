@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Link existing student profiles to user accounts (nullable until registration/login linking).
--- SQLite may already have students from Lab 6; add user_id only if missing.
--- Run once on a fresh Lab 6 database. Re-running may error on duplicate column.
+-- Link existing student profiles to user accounts (nullable until registration).
+-- SQLite cannot add a UNIQUE column with ALTER TABLE, so uniqueness is via index.
+ALTER TABLE students ADD COLUMN user_id INTEGER REFERENCES users(user_id);
 
-ALTER TABLE students ADD COLUMN user_id INTEGER UNIQUE REFERENCES users(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_students_user_id ON students(user_id);

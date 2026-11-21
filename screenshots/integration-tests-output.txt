@@ -1,0 +1,15 @@
+PASS UC01 create and Open
+PASS Lab 4 checkbox values preserved
+PASS Duplicate email reuses student
+PASS UC02 course and status filter
+PASS Invalid reason rejected
+PASS Invalid submission writes nothing
+PASS Edit Open request
+PASS Updated reason persisted
+PASS Cancel Open request
+PASS Cancelled row retained
+PASS Second cancellation rejected
+PASS Unrelated request unchanged
+PASS FK enforced
+PASS UC02 empty filter result
+All integration checks passed

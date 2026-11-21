@@ -1,16 +1,24 @@
 <?php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../services/requestService.php';
+
+$pdo = openDatabase();
+$user = requireLogin($pdo);
+requireRole($user, array('Student'));
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     exit('POST required');
 }
+verifyCsrfToken($_POST);
 if (($_POST['form_name'] ?? '') !== 'tutoring_request') {
     http_response_code(400);
     exit('Invalid form');
 }
+
 try {
-    $id = submitRequest(openDatabase(), $_POST);
+    $id = submitRequestForUser($pdo, $user, $_POST);
     header('Location: request-details.php?request_id=' . $id, true, 303);
     exit;
 } catch (InvalidArgumentException $e) {

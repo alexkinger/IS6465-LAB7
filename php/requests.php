@@ -1,27 +1,42 @@
 <?php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../services/requestService.php';
-$course = trim((string)($_GET['course'] ?? ''));
-$status = (string)($_GET['status'] ?? '');
-if ($course !== '' && !in_array($course, ['IS 6465', 'IS 6495', 'IS 6570'], true)) {
+
+$pdo = openDatabase();
+$user = requireLogin($pdo);
+requireRole($user, array('Student', 'Administrator'));
+
+$course = trim((string) ($_GET['course'] ?? ''));
+$status = (string) ($_GET['status'] ?? '');
+if ($course !== '' && !in_array($course, array('IS 6465', 'IS 6495', 'IS 6570'), true)) {
     http_response_code(400);
     exit('Invalid course');
 }
-if ($status !== '' && !in_array($status, ['Open', 'Cancelled', 'Assigned', 'Completed'], true)) {
+if ($status !== '' && !in_array($status, array('Open', 'Cancelled', 'Assigned', 'Completed'), true)) {
     http_response_code(400);
     exit('Invalid status');
 }
-$rows = listRequests(openDatabase(), $course, $status);
+
+if ($user['role'] === 'Administrator') {
+    $rows = listRequests($pdo, $course, $status);
+    $heading = 'All tutoring requests';
+} else {
+    $rows = listRequestsForUser($pdo, (int) $user['user_id'], $course, $status);
+    $heading = 'My tutoring requests';
+}
+
 require __DIR__ . '/../includes/header.php';
-require __DIR__ . '/../includes/nav.php'; ?>
+require __DIR__ . '/../includes/nav.php';
+?>
 <main class="container py-4">
-    <h1>Tutoring requests</h1>
+    <h1><?= escapeHtml($heading) ?></h1>
     <form method="get" class="row g-2 mb-3">
         <div class="col"><select class="form-select" name="course">
-                <option value="">All courses</option><?php foreach (['IS 6465', 'IS 6495', 'IS 6570'] as $c): ?><option value="<?= escapeHtml($c) ?>" <?= $c === $course ? 'selected' : '' ?>><?= escapeHtml($c) ?></option><?php endforeach; ?>
+                <option value="">All courses</option><?php foreach (array('IS 6465', 'IS 6495', 'IS 6570') as $c): ?><option value="<?= escapeHtml($c) ?>" <?= $c === $course ? 'selected' : '' ?>><?= escapeHtml($c) ?></option><?php endforeach; ?>
             </select></div>
         <div class="col"><select class="form-select" name="status">
-                <option value="">All statuses</option><?php foreach (['Open', 'Cancelled', 'Assigned', 'Completed'] as $st): ?><option value="<?= escapeHtml($st) ?>" <?= $st === $status ? 'selected' : '' ?>><?= escapeHtml($st) ?></option><?php endforeach; ?>
+                <option value="">All statuses</option><?php foreach (array('Open', 'Cancelled', 'Assigned', 'Completed') as $st): ?><option value="<?= escapeHtml($st) ?>" <?= $st === $status ? 'selected' : '' ?>><?= escapeHtml($st) ?></option><?php endforeach; ?>
             </select></div>
         <div class="col-auto"><button class="btn btn-primary">Filter</button></div>
     </form>
@@ -38,13 +53,13 @@ require __DIR__ . '/../includes/nav.php'; ?>
                 </tr>
             </thead>
             <tbody><?php foreach ($rows as $r): $topic = decodeTopic($r['topic']); ?><tr>
-                        <td><?= (int)$r['request_id'] ?></td>
+                        <td><?= (int) $r['request_id'] ?></td>
                         <td><?= escapeHtml($r['student_name']) ?></td>
                         <td><?= escapeHtml($r['course']) ?></td>
                         <td><?= escapeHtml($topic['reason']) ?></td>
                         <td><?= escapeHtml($r['preferred_date']) ?></td>
                         <td><?= escapeHtml($r['status']) ?></td>
-                        <td><a href="request-details.php?request_id=<?= (int)$r['request_id'] ?>">View</a></td>
+                        <td><a href="request-details.php?request_id=<?= (int) $r['request_id'] ?>">View</a></td>
                     </tr><?php endforeach; ?></tbody>
         </table><?php endif; ?>
 </main><?php require __DIR__ . '/../includes/footer.php'; ?>
