@@ -46,7 +46,13 @@ require __DIR__ . '/../includes/nav.php';
         <dt>Status</dt>
         <dd><?= escapeHtml($r['status']) ?></dd>
     </dl>
-    <?php if ($r['status'] === 'Open' && ($user['role'] === 'Administrator' || (int) $r['user_id'] === (int) $user['user_id'])): ?>
+    <?php
+    $canManage = $r['status'] === 'Open' && (
+        $user['role'] === 'Administrator'
+        || (isset($r['user_id']) && (int) $r['user_id'] === (int) $user['user_id'])
+    );
+    ?>
+    <?php if ($canManage): ?>
         <a class="btn btn-primary" href="edit-request.php?request_id=<?= $id ?>">Edit</a>
         <a class="btn btn-outline-danger" href="delete-request.php?request_id=<?= $id ?>">Cancel request</a>
     <?php endif; ?>

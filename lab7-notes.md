@@ -1,9 +1,10 @@
 # Lab 7 Notes: Authentication and Authorization for the Peer Tutoring Hub
 
-Repo: https://github.com/alexkinger/IS6465-LAB7  
-This is a **new** repository. Lab 6 (`IS6465-LAB6`) was not modified.
+GitHub repository: https://github.com/alexkinger/IS6465-LAB7  
 
-Classroom demo only. Test data only. No real names, emails, or passwords.
+Application folder: `lab7/` (per assignment instructions). Lab 6 (`IS6465-LAB6`) was not modified.
+
+Classroom demonstration only. Test data only. Do not enter real names, university IDs, email addresses, or passwords.
 
 ---
 
@@ -23,31 +24,36 @@ Return a complete Lab 7 application package with all updated and new files.
 
 ### Uploaded source files
 
-1. Peer Tutoring Hub User Management Design Document (`Peer_Tutoring_Hub_User_Management_With_Diagrams.docx`)
-2. Application Builder (`application-builder.txt`)
-3. Test Harness Generator (`test-harness-generator.txt`)
-4. Traceability Auditor (`traceability-auditor.txt`)
-5. Authentication Reading Handout (`IS6465_Authentication_Reading_Handout_v1.2_[16Nov2026].pdf`)
-6. Lab 6 application starter (Module 8 `lab6/` package / lab6.zip equivalent)
+1. Peer Tutoring Hub User Management Design Document
+2. Application Builder document
+3. Test Harness Generator document
+4. Traceability Auditor document
+5. Authentication Reading Handout
+6. lab6.zip (Lab 6 Peer Tutoring Hub application)
 
 ### How Lab 7 extends Lab 6
 
-Lab 7 keeps the Lab 6 three-tier layout (`php/`, `services/`, `repositories/`, `config/`, `database/`, `tests/`). It adds a `users` table, links `students.user_id`, and introduces shared auth helpers in `includes/auth.php`. Registration, login, logout, profile, password change, and admin user management pages were added. Tutoring request pages now require login, CSRF on POSTs, Student or Administrator role checks, and ownership filtering for students.
+Lab 7 keeps the Lab 6 three-tier architecture (`php/`, `services/`, `repositories/`, `config/`, `database/`, `tests/`). It adds user accounts, login/logout, sessions, password hashing, CSRF protection, and role-based access for Student and Administrator users. Tutoring request pages are protected so students manage their own requests and administrators can review users and all requests. Tutor request workflow is postponed as stated in the lab.
 
-### One generated piece verified against the design / handout
+### One generated file verified against the design document / reading handout
 
-`includes/auth.php` implements `requireLogin` with a 1200-second idle timeout, reloads the user from SQLite, rejects Inactive accounts, and refreshes `last_activity`, `display_name`, and `role`. That matches the Authentication Reading Handout pattern. Public registration in `userService.php` only allows Student or Tutor, which matches the design rule that public registration cannot grant Administrator.
+`lab7/includes/auth.php` was checked against the Authentication Reading Handout. It provides `startSecureSession`, `requireLogin` (20-minute / 1200-second idle timeout, reload user from SQLite, reject Inactive accounts), `requireRole`, CSRF helpers, and complete logout cleanup. That matches the handout’s shared session-guard pattern. Public registration in `lab7/services/userService.php` also rejects Administrator creation, which matches the User Management Design Document rule that public registration cannot grant Administrator.
 
 ---
 
 ## Part 2: Set Up the Database
 
-Commands used:
+Commands used (from the repository root):
 
 ```bash
-cd database
+cd lab7/database
 sqlite3 tutoring.db < setup-database.sql
 sqlite3 tutoring.db < upgrade-to-user-management.sql
+```
+
+Then:
+
+```bash
 sqlite3 tutoring.db
 .tables
 .quit
@@ -65,13 +71,13 @@ students           tutoring_requests  users
 
 ## Part 3: Create an Administrator Account
 
-Command structure used (password omitted from notes):
+From `lab7/database`, command structure used (actual password omitted from notes):
 
 ```bash
-php create-admin.php "Test Administrator" admin@example.com "<password-at-least-12-chars>"
+php create-admin.php "Test Administrator" admin@example.com "<password-at-least-12-characters>"
 ```
 
-Confirmation: the script printed that the administrator account was created successfully.
+Confirmation: the script reported that the administrator account was created successfully.
 
 - Test administrator email: `admin@example.com`
 - Role assigned: `Administrator`
@@ -80,57 +86,77 @@ Confirmation: the script printed that the administrator account was created succ
 
 ## Part 4: Run the Application
 
+Returned to the lab7 project root and started the PHP development server exactly as instructed:
+
 ```bash
 cd ..
-php -S 0.0.0.0:8000 php/router.php
+php -S 0.0.0.0:8000
 ```
 
-Browser URL opened: `http://127.0.0.1:8000/` (and Codespaces equivalent on forwarded port 8000).
+Browser URL opened: `http://127.0.0.1:8000/` (Codespaces: forwarded port 8000).
 
-The application opened successfully. Visiting `/` or a protected page such as `/php/profile.php` without being logged in redirected to `/php/login.php`.
+The application opened successfully. When first accessed without being logged in, the application redirected to the login page (`/php/login.php`).
+
+![Unauthenticated visit redirects to login](screenshots/01-login-redirect.png)
 
 ---
 
 ## Part 5: Test the Student Workflow
 
-Test account used: `student@example.com` (fictional).
+Registered and tested with fictional student data (`Bill Moore`, `bill.moore@example.com`).
 
 | Test | What I Did | Expected Result | Actual Result | Pass or Fail |
 |------|------------|-----------------|---------------|--------------|
-| Register student account | Opened Create Account, submitted Student role with test data | Student account is created | Redirected to login with registered confirmation; user row created | Pass |
-| Log in as student | Submitted email/password on login form | Student can access protected student pages | Redirected to My Profile; student nav links available | Pass |
-| View or update profile | Opened My Profile and confirmed name/email/role/status | Profile information is displayed or saved | Profile showed Test Student / student@example.com / Student / Active | Pass |
-| Create tutoring request | Submitted request form (identity read-only from session) | A new request is created with status Open | Request #2 created with status Open | Pass |
-| Edit Open request | Edited reason/topics/time while status Open | Updated request information is displayed | Reason updated to “Updated help with PHP authentication now.” | Pass |
-| View my requests | Opened My Requests | Student sees the student’s own requests | List titled “My tutoring requests” showed the student’s request | Pass |
-| Log out | Clicked Log Out, then tried profile again | Session ends and login page appears | Redirect to login; later profile visit redirected to login | Pass |
+| Register student account | Opened Create Account, entered test name/email/password, chose Student, submitted | Student account is created | Redirected to login with registration confirmation; student account stored | Pass |
+| Log in as student | Entered student email and password on login form | Student can access protected student pages | Redirected to My Profile; student navigation links available | Pass |
+| View or update profile | Opened My Profile and reviewed name, email, role, status | Profile information is displayed or saved | Profile showed Bill Moore, bill.moore@example.com, Student, Active | Pass |
+| Create tutoring request | Opened Request a Session and submitted a valid Open request | A new request is created with status Open | Request created with status Open | Pass |
+| Edit Open request | Edited the Open request details and saved | Updated request information is displayed | Updated request details displayed on the request page | Pass |
+| View my requests | Opened My Requests | Student sees the student’s own requests | Student request list showed the student’s own request | Pass |
+| Log out | Selected Log Out, then tried a protected page | Session ends and login page appears | Redirected to login; protected page required login again | Pass |
 
-Screenshot / evidence: `screenshots/student-profile.html` and `screenshots/student-requests.html` (saved page captures from the successful student run).
+Screenshot (student profile after successful registration/login):
+
+![Student profile](screenshots/03-student-profile.png)
+
+Additional student evidence: `screenshots/02-student-registration-success.png`, `screenshots/04-student-tutoring-request.png`, `screenshots/05-student-request-list.png`.
 
 ---
 
 ## Part 6: Test the Administrator Workflow
 
-Logged in as `admin@example.com`. Viewed Manage Users and All Requests. Confirmed the administrator can see more than one student’s account and request data (admin user + student user; seed Maria Lopez request plus the student’s request). Logged out successfully.
+Logged in with the administrator account from Part 3 (`admin@example.com`).
 
-### Authentication vs authorization answers
+Completed:
+
+1. Log in as the administrator.
+2. View the user list (Manage Users).
+3. View tutoring requests (All Requests).
+4. Confirmed the administrator can view information beyond one student’s own account and requests (admin + student accounts; multiple requests including other student data).
+5. Log out.
+
+### Answers
 
 **What is authentication in this application?**  
-Authentication verifies who the user is. Login checks the email, Active status, and password hash, then creates a server session with `user_id`, display name, and role.
+Authentication verifies who the user is. Login checks email, Active status, and the password hash, then creates a server-side session identity.
 
 **What is authorization in this application?**  
-Authorization decides what that authenticated user may do. Role checks (`requireRole`) and ownership queries (for example `students.user_id = current user`) limit pages and records.
+Authorization decides what the authenticated user may do. The app uses role checks (`requireRole`) and ownership checks (students only see requests linked through `students.user_id`).
 
 **How is student access different from administrator access?**  
-Students manage their own profile and only their own tutoring requests. Administrators can search all users and view all tutoring requests.
+Students can manage their own profile and only their own tutoring requests. Administrators can search/manage users and view all tutoring requests.
 
 **Which functions or pages should be limited to administrators?**  
-Manage Users, Update Role, Update Status, Delete User, and the all-requests admin view of every student’s requests.
+Manage Users, Update Role, Update Status, Delete User, and viewing all tutoring requests across students.
 
 **What happens after logout if a user tries to visit a protected page directly?**  
-`requireLogin` finds no valid session `user_id` and redirects to `login.php`.
+`requireLogin` finds no valid session and redirects the browser to the login page.
 
-Screenshot / evidence: `screenshots/admin-manage-users.html` and `screenshots/admin-all-requests.html`.
+Screenshot (administrator user list):
+
+![Administrator manage users](screenshots/06-admin-manage-users.png)
+
+Additional admin evidence: `screenshots/07-admin-all-requests.png`.
 
 ---
 
@@ -140,45 +166,47 @@ Screenshot / evidence: `screenshots/admin-manage-users.html` and `screenshots/ad
 
 | Question | Answer |
 |----------|--------|
-| Which file displays the Create Account form? | `php/register.php` |
-| Which file receives the submitted registration form? | `php/register.php` (POST to itself) |
-| Which file or function creates and verifies the CSRF token? | `includes/auth.php` (`csrfToken`, `csrfField`, `verifyCsrfToken`) |
-| Which service validates the registration information? | `services/userService.php` (`validateRegistration` / `registerUser`) |
-| Where is the password hashed? | `services/userService.php` inside `registerUser` using `password_hash` |
-| Which repository files insert user and student data? | `repositories/userPDO.php` (`insertUser`) and `repositories/studentPDO.php` (`insertStudentWithUser` or link existing student) |
+| Which file displays the Create Account form? | `lab7/php/register.php` |
+| Which file receives the submitted registration form? | `lab7/php/register.php` (POST to itself) |
+| Which file or function creates and verifies the CSRF token? | `lab7/includes/auth.php` (`csrfToken`, `csrfField`, `verifyCsrfToken`) |
+| Which service validates the registration information? | `lab7/services/userService.php` (`validateRegistration` / `registerUser`) |
+| Where is the password hashed? | `lab7/services/userService.php` in `registerUser` using `password_hash` |
+| Which repository files insert user and student data? | `lab7/repositories/userPDO.php` (`insertUser`) and `lab7/repositories/studentPDO.php` (`insertStudentWithUser` / link existing student) |
 | Which database tables receive records when a student registers? | `users` and `students` |
 
-Flow: Browser → `register.php` → authentication/CSRF checks → registration controller logic in `register.php` → `userService` → user/student repositories → SQLite.
+Guide flow used: Browser → `register.php` → authentication and CSRF checks → registration controller → user service → user and student repositories → SQLite database.
 
 ### User login workflow
 
 | Question | Answer |
 |----------|--------|
-| Which file displays the login form? | `php/login.php` |
-| Which file receives the submitted login credentials? | `php/login.php` (POST to itself) |
-| Which repository retrieves a user by email address? | `repositories/userPDO.php` (`findUserByEmail`) |
-| Where is the submitted password verified? | `services/userService.php` (`authenticateUser` with `password_verify`) |
+| Which file displays the login form? | `lab7/php/login.php` |
+| Which file receives the submitted login credentials? | `lab7/php/login.php` (POST to itself) |
+| Which repository retrieves a user by email address? | `lab7/repositories/userPDO.php` (`findUserByEmail`) |
+| Where is the submitted password verified? | `lab7/services/userService.php` (`authenticateUser` with `password_verify`) |
 | What session actions occur after successful login? | `session_regenerate_id(true)`; store `user_id`, `display_name`, `role`, `last_activity`; create CSRF token; redirect to profile |
-| Why should the application regenerate the session ID after login? | To prevent session fixation (an attacker cannot keep using a pre-login session ID) |
-| How does the application determine whether the logged in user is a student or administrator? | From the `role` column loaded from the `users` table into `$_SESSION['role']`, refreshed on each `requireLogin` |
+| Why should the application regenerate the session ID after login? | To prevent session fixation. An attacker should not keep using a session ID that existed before authentication. |
+| How does the application determine whether the logged in user is a student or administrator? | From the `role` value stored in the `users` table and loaded into the session (`$_SESSION['role']`), refreshed by `requireLogin` |
 
-Flow: Browser → `login.php` → authentication/CSRF checks → login controller logic in `login.php` → `userService` → `userPDO` → SQLite.
+Guide flow used: Browser → `login.php` → authentication and CSRF checks → login controller → user service → user repository → SQLite database.
 
-### Why hash and verify in the application layer
+### Why password hashing and verification belong in the application layer
 
-Password hashing and verification belong in the application layer because that layer owns business rules and secrets handling. Presentation pages should collect input and show results, not decide how credentials are stored. The database should store the hash, not invent hashing logic in SQL or setup scripts. Keeping `password_hash` / `password_verify` in `userService` makes the control easy to test, reuse, and audit.
+Password hashing and verification should happen in the application layer because that layer owns authentication business rules. Presentation pages should collect input and display results, not decide how credentials are stored. The database should store the finished hash, not invent hashing in SQL or in a setup script. Keeping `password_hash` and `password_verify` in `userService` makes the rules reusable, testable, and easier to audit.
 
 ---
 
 ## Part 8: Run the Automated Tests
 
-Commands:
+From the `lab7` project root:
 
 ```bash
 php tests/validation-tests.php
 php tests/user-management-tests.php
 php tests/integration-tests.php
 ```
+
+The provided test files were not changed. `validation-tests.php` and `integration-tests.php` match the Lab 6 starter versions. `user-management-tests.php` is the additional Lab 7 suite.
 
 ### Validation tests: PASS
 
@@ -222,15 +250,17 @@ PASS CSRF token format is 64 hex characters
 All user-management checks passed
 ```
 
-### Integration tests: PASS
+### Integration tests: FAIL (3 failures)
+
+Complete output:
 
 ```
 PASS UC01 create and Open
 PASS Lab 4 checkbox values preserved
-PASS Duplicate email reuses student
-PASS UC02 course and status filter
+FAIL Duplicate email reuses student
+FAIL UC02 course and status filter
 PASS Invalid reason rejected
-PASS Invalid submission writes nothing
+FAIL Invalid submission writes nothing
 PASS Edit Open request
 PASS Updated reason persisted
 PASS Cancel Open request
@@ -239,61 +269,80 @@ PASS Second cancellation rejected
 PASS Unrelated request unchanged
 PASS FK enforced
 PASS UC02 empty filter result
-All integration checks passed
+FAILURES: 3
 ```
 
-No failing integration tests after clearing seed rows inside the isolated in-memory test database. Full saved outputs are also under `screenshots/`.
+#### Failed integration tests (evaluation)
+
+Per lab instructions, the provided test files were not modified. The three failures match the coding companion’s Lab 7 demo outcome and are left for a later testing focus.
+
+1. **Duplicate email reuses student**  
+   Checks that a second submit with the same email does not create another `students` row (`COUNT(*) === 1`).  
+   Likely cause: `setup-database.sql` already seeds Maria Lopez, so the student count is higher than the test expects even when Jordan is reused correctly.
+
+2. **UC02 course and status filter**  
+   Checks that filtering Open IS 6465 requests returns exactly 2 rows.  
+   Likely cause: the seeded Maria Lopez request plus the two Jordan requests changes the expected count.
+
+3. **Invalid submission writes nothing**  
+   Checks that invalid input leaves `tutoring_requests` at exactly 2 rows.  
+   Likely cause: the seeded request already exists, so the total is higher than the assertion expects.
+
+Further investigation would focus on seed data in `setup-database.sql` versus the hard-coded counts in the provided integration test. No test file changes were made.
 
 ---
 
-## Part 9: AI Skills Pack Process
+## Part 9: Use the AI Skills Pack Process
 
 ### Application Builder
 
 **Prompt:**  
 Explain how a student registration request moves from `register.php` through authentication checks, PHP services, repositories, PDO, and SQLite in the Peer Tutoring Hub application. Identify the responsibility of each file or layer.
 
-**AI response (summary):**  
-`register.php` renders the form and accepts POST. `auth.php` starts the session and verifies the CSRF token. `registerUser` in `userService.php` validates fields, rejects Administrator role for public signup, and hashes the password. `userPDO.php` inserts into `users`. For Student role, `studentPDO.php` inserts or links a `students` row with `user_id`. PDO opens `tutoring.db` through `config/db.php`.
+**AI response:**  
+A student opens `php/register.php`, which is the presentation page for the Create Account form. On GET, `includes/auth.php` starts a secure session and creates a CSRF token for the form. On POST, `register.php` calls `verifyCsrfToken` before any account write. Valid requests call `registerUser` in `services/userService.php`. That service validates name, email, password strength, password confirmation, and allowed public roles (Student or Tutor only). It hashes the password with `password_hash` and opens a transaction. `repositories/userPDO.php` inserts the account into `users`. For Student role, `repositories/studentPDO.php` inserts or links a `students` row using `user_id`. `config/db.php` supplies the PDO connection to `database/tutoring.db`. Presentation collects and displays; the service enforces business rules and hashing; repositories own SQL; SQLite stores the records.
 
 **Accurate statement verified in code:**  
-Password hashing happens in the service layer (`registerUser` calls `password_hash`) before the repository insert. Confirmed in `services/userService.php`.
+“The password is hashed in the service layer before the repository insert.” Verified in `lab7/services/userService.php` inside `registerUser`, which calls `password_hash` and then `insertUser`.
 
 ### Traceability Auditor
 
 **Prompt:**  
 Trace the requirement “a student can register, log in, create a tutoring request, and log out” through the presentation pages, authentication code, services, repositories, SQLite tables, and automated tests in this project.
 
+**AI response (used to build the table below):**  
+The requirement maps to UM-01, UM-09, the protected UC01 request flow, and UM-10. Registration is `register.php` plus `userService` / user and student repositories / `users`+`students`. Login is `login.php` plus `authenticateUser` / `findUserByEmail` / session regenerate. Request creation is `request-form.php` and `process-request.php` with `requireLogin`, Student role, CSRF, and `submitRequestForUser`. Logout is `logout.php` calling `logoutSession`. Tests cover registration/login/request behavior in `user-management-tests.php` and request persistence in `integration-tests.php`; logout was verified manually in the student workflow.
+
 | Requirement | Presentation Page | Authentication or Authorization | Service or Validation | Repository or SQL | Database Table | Test Evidence |
 |-------------|-------------------|----------------------------------|-----------------------|-------------------|----------------|---------------|
-| Student registers an account | `php/register.php` | CSRF via `auth.php`; role limited to Student/Tutor | `registerUser` / `validateRegistration` | `insertUser`, `insertStudentWithUser` | `users`, `students` | UM-01 cases in `user-management-tests.php` |
-| Student logs in | `php/login.php` | CSRF; session regenerate after success | `authenticateUser` + `password_verify` | `findUserByEmail` | `users` | UM-09 cases in `user-management-tests.php` |
+| Student registers an account | `php/register.php` | CSRF via `auth.php`; public roles limited to Student/Tutor | `registerUser` / `validateRegistration` | `insertUser`, `insertStudentWithUser` | `users`, `students` | UM-01 cases in `tests/user-management-tests.php` |
+| Student logs in | `php/login.php` | CSRF; `session_regenerate_id` after success | `authenticateUser` + `password_verify` | `findUserByEmail` | `users` | UM-09 cases in `tests/user-management-tests.php` |
 | Student creates a tutoring request | `php/request-form.php` → `process-request.php` | `requireLogin`, `requireRole(Student)`, CSRF | `submitRequestForUser` / `validateSubmission` | `insertTutoringRequest`, student lookup by `user_id` | `students`, `tutoring_requests` | “Student can create tutoring request” + UC01 integration |
-| User logs out | `php/logout.php` | `logoutSession` clears session and cookie | N/A (session cleanup) | N/A | N/A (session only) | Manual workflow; after logout protected pages redirect |
+| User logs out | `php/logout.php` | `logoutSession` clears session data and cookie | Session cleanup in `auth.php` | N/A | N/A (session only) | Manual Part 5 logout; protected page redirects afterward |
 
 ### Test Harness Generator
 
 **Prompt:**  
 Suggest one useful test case for authentication or authorization in the Peer Tutoring Hub application. The test must relate to registration, login, logout, session protection, role based access, password validation, CSRF protection, or account status.
 
-**AI suggestion:**  
-Attempt public registration with role `Administrator` and assert the account is rejected and no Administrator row is created.
+**AI response:**  
+Suggested test: attempt public registration with role `Administrator` and assert the request is rejected and no Administrator account is created. This protects the approved design rule that public registration cannot grant Administrator privileges.
 
 **Evaluation:**
 
-- Already covered: yes, in `tests/user-management-tests.php` (“UM-01 rejects Administrator via public registration”).
-- Manual / automated: automated already; manually, open Create Account and confirm only Student/Tutor radios exist, then attempt a forged POST with role=Administrator and confirm the error.
-- Appropriate: yes. It matches an approved design rule and is a real authorization boundary, not just a UI check.
+- **Already covered?** Yes. `tests/user-management-tests.php` includes “UM-01 rejects Administrator via public registration.”
+- **How to test manually or add automated coverage:** Manually, open Create Account and confirm only Student/Tutor options are offered, then attempt a forged POST with `role=Administrator` and confirm the error and no admin row. Automated coverage already exists in the user-management suite.
+- **Is the AI generated test appropriate?** Yes. It matches an approved authorization boundary from the User Management Design Document and is relevant to Lab 7.
 
 ### Skills Pack reflection
 
-The Skills Pack helped keep Lab 7 aligned with the Lab 6 three-tier layout instead of inventing a new structure. The Application Builder explanation made the registration path easier to narrate for Part 7. The Traceability Auditor table forced a file-by-file check against UM requirements. Developers still have to verify AI output against the design document and source code, because Skills Pack text can lag the week’s auth requirements and generated code can miss ownership, CSRF, or schema details.
+The AI Skills Pack helped keep Lab 7 aligned with the existing Lab 6 three-tier layout instead of inventing a new structure. The Application Builder explanation made the registration path easier to narrate for Part 7. The Traceability Auditor table forced a file-by-file check from requirement to page, service, repository, table, and test. Developers must still verify AI generated explanations, code, and tests against the actual requirements and source code, because Skills Pack guidance can lag the week’s auth materials and generated output can miss CSRF, ownership, or schema details.
 
 ---
 
 ## Part 10: Inspect the Database
 
-Command:
+From the lab7 project root:
 
 ```bash
 sqlite3 database/tutoring.db
@@ -321,22 +370,22 @@ Result:
 
 ```
 1|Test Administrator|admin@example.com|Administrator|Active|||
-2|Test Student|student@example.com|Student|Active|2|Test Student|student@example.com
+2|Bill Moore|bill.moore@example.com|Student|Active|2|Bill Moore|bill.moore@example.com
 ```
 
 ### Explanations
 
-**What the LEFT JOIN does:**  
-It returns every row from `users`, and adds matching `students` columns when a linked student profile exists. Users without a student row still appear, with NULL student fields.
+**What the LEFT JOIN does in this query:**  
+It returns every row from `users` and adds matching `students` columns when a linked student profile exists. Users without a student row still appear, with NULL student fields.
 
-**How `users` connects to `students`:**  
-`students.user_id` is a foreign key to `users.user_id` (unique when set). One user account can link to at most one student profile.
+**How the users table connects to the students table:**  
+`students.user_id` references `users.user_id`. One user account can link to at most one student profile.
 
-**Why account info is stored separately from student profile info:**  
-Login credentials, role, and status belong to the account (`users`). Tutoring workflow identity lives in `students` / `tutoring_requests`. Separating them lets Administrators and Tutors exist without forcing a tutoring-request profile, and keeps password hashes out of tutoring tables.
+**Why the application stores account information separately from student profile information:**  
+Login credentials, role, and status belong to the account (`users`). Tutoring identity and requests belong to `students` / `tutoring_requests`. Separating them lets Administrators exist without a tutoring profile and keeps password hashes out of tutoring tables.
 
-**Why an administrator may not have a matching students row:**  
-Administrators are created for management, not tutoring requests. The CLI admin script inserts only into `users`, so the LEFT JOIN correctly shows NULL student columns for that account.
+**Why an administrator account may not have a matching row in the students table:**  
+Administrators are created for management, not tutoring requests. The `create-admin.php` script inserts only into `users`, so the LEFT JOIN correctly shows NULL student columns for that account.
 
 ```
 .quit
@@ -344,9 +393,7 @@ Administrators are created for management, not tutoring requests. The CLI admin 
 
 ---
 
-## Submission
+## Required submission files
 
-- GitHub repo / Codespaces source: https://github.com/alexkinger/IS6465-LAB7
-- Notes file: `lab7-notes.md` (this file)
-
-Open the repo in GitHub Codespaces, sync if needed, then run the database and `php -S 0.0.0.0:8000 php/router.php` steps from the README for the live demo link.
+1. GitHub Codespaces link for https://github.com/alexkinger/IS6465-LAB7  
+2. This file: `lab7-notes.md`

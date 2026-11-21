@@ -2,6 +2,15 @@
 
 function findStudentByEmail($pdo, $email)
 {
+    // Lab 6-compatible column list (provided integration tests load setup-database.sql only).
+    $stmt = $pdo->prepare('SELECT student_id, student_name, student_email FROM students WHERE student_email = ?');
+    $stmt->execute([$email]);
+    return $stmt->fetch();
+}
+
+function findStudentByEmailWithUser($pdo, $email)
+{
+    // Lab 7: includes user_id after upgrade-to-user-management.sql.
     $stmt = $pdo->prepare('SELECT student_id, student_name, student_email, user_id FROM students WHERE student_email = ?');
     $stmt->execute([strtolower(trim($email))]);
     return $stmt->fetch();
@@ -17,7 +26,7 @@ function findStudentByUserId($pdo, $userId)
 function insertStudentIfAbsent($pdo, $name, $email)
 {
     $stmt = $pdo->prepare('INSERT OR IGNORE INTO students(student_name, student_email) VALUES(?,?)');
-    $stmt->execute([$name, strtolower(trim($email))]);
+    $stmt->execute([$name, $email]);
 }
 
 function insertStudentWithUser($pdo, $name, $email, $userId)
@@ -29,7 +38,7 @@ function insertStudentWithUser($pdo, $name, $email, $userId)
 
 function linkStudentToUser($pdo, $studentId, $userId)
 {
-    $stmt = $pdo->prepare('UPDATE students SET user_id = ?, student_name = COALESCE(student_name, student_name) WHERE student_id = ?');
+    $stmt = $pdo->prepare('UPDATE students SET user_id = ? WHERE student_id = ?');
     $stmt->execute([(int) $userId, (int) $studentId]);
     return $stmt->rowCount() === 1;
 }

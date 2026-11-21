@@ -74,7 +74,7 @@ function registerUser($pdo, $input)
     try {
         $userId = insertUser($pdo, $data['full_name'], $data['email'], $hash, $data['role'], 'Active');
         if ($data['role'] === 'Student') {
-            $existing = findStudentByEmail($pdo, $data['email']);
+            $existing = findStudentByEmailWithUser($pdo, $data['email']);
             if ($existing) {
                 if (!empty($existing['user_id']) && (int) $existing['user_id'] !== $userId) {
                     throw new RuntimeException('Student profile is already linked to another account.');

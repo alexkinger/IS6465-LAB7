@@ -9,7 +9,8 @@ function insertTutoringRequest($pdo, $studentId, $data)
 
 function findRequest($pdo, $id)
 {
-    $stmt = $pdo->prepare('SELECT r.*, s.student_name, s.student_email, s.user_id FROM tutoring_requests r JOIN students s ON r.student_id = s.student_id WHERE r.request_id = ?');
+    // Lab 6-compatible select (no students.user_id required).
+    $stmt = $pdo->prepare('SELECT r.*, s.student_name, s.student_email FROM tutoring_requests r JOIN students s ON r.student_id = s.student_id WHERE r.request_id = ?');
     $stmt->execute([$id]);
     return $stmt->fetch();
 }
@@ -23,7 +24,8 @@ function findRequestForUser($pdo, $id, $userId)
 
 function listRequests($pdo, $course = '', $status = '')
 {
-    $sql = 'SELECT r.*, s.student_name, s.user_id FROM tutoring_requests r JOIN students s ON r.student_id = s.student_id WHERE 1=1';
+    // Lab 6-compatible select (no students.user_id required).
+    $sql = 'SELECT r.*, s.student_name FROM tutoring_requests r JOIN students s ON r.student_id = s.student_id WHERE 1=1';
     $args = array();
     if ($course !== '') {
         $sql .= ' AND r.course = ?';

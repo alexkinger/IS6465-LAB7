@@ -1,6 +1,6 @@
 .DS_Store
-database/*.db
-database/*.db-journal
+lab7/database/*.db
+lab7/database/*.db-journal
 *.sqlite
 .env
 .env.*
