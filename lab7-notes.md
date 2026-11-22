@@ -1,5 +1,7 @@
 # Lab 7 Notes
 
+GitHub repo: https://github.com/alexkinger/IS6465-LAB7
+
 ## Part 1: Generate the Lab 7 Application
 
 I started from Lab 6 and the Module 8 materials (UM design doc, auth handout, Skills Pack). I used AI for a first draft of the UM/auth pieces, then I reviewed the output against the design document and reading handout before keeping anything.
