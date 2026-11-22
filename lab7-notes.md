@@ -1,12 +1,4 @@
-# Lab 7 Notes: Authentication and Authorization for the Peer Tutoring Hub
-
-Repo: https://github.com/alexkinger/IS6465-LAB7  
-App folder: `lab7/`  
-Lab 6 repo was left alone.
-
-Test data only. No real personal information.
-
----
+# Lab 7 Notes
 
 ## Part 1: Generate the Lab 7 Application
 
@@ -344,10 +336,3 @@ Accounts hold login, role, and status. Student rows support tutoring requests. K
 ```
 .quit
 ```
-
----
-
-## Submission
-
-- GitHub repo: https://github.com/alexkinger/IS6465-LAB7  
-- Notes: `lab7-notes.md`
